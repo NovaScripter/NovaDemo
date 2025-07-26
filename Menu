@@ -1,1 +1,320 @@
-loadstring("\108\111\97\100\115\116\114\105\110\103\40\40\103\97\109\101\58\72\116\116\112\71\101\116\40\39\104\116\116\112\115\58\47\47\112\97\115\116\101\102\121\46\97\112\112\47\78\111\118\97\77\101\110\117\79\98\102\117\115\99\97\116\101\47\114\97\119\39\44\116\114\117\101\41\41\40\41\41")()
+-- Anti Detection
+pcall(function()
+    if getconnections then
+        for _,v in pairs(getconnections(game.Players.LocalPlayer.Idled)) do
+            v:Disable()
+        end
+    end
+end)
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+
+-- Load Rayfield
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Window = Rayfield:CreateWindow({
+    Name = "Nova Menu Demo", 
+    LoadingTitle = "Don't forget to Join Our Discord!", 
+    LoadingSubtitle = "Made by NovaScripter", 
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "NovaMenuConfig",
+        FileName = "Config"
+    },
+    KeySystem = false
+})
+
+-- Variables
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local Humanoid = Character:WaitForChild("Humanoid")
+local DefaultJumpPower = Humanoid.UseJumpPower and Humanoid.JumpPower or 50
+local JumpBoostEnabled, InfiniteJumpEnabled, AutoHitEnabled, AntiPowerEnabled, AimbotEnabled = false,false,false,false,false
+local AutoHitLoop, AntiPowerLoop, AimbotLoop
+
+-- Function: Nearest Player
+local function GetNearestPlayer()
+    local closest, distance = nil, math.huge
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and plr.Character:FindFirstChild("Humanoid").Health > 0 then
+            local diff = (plr.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+            if diff < distance then
+                distance = diff
+                closest = plr
+            end
+        end
+    end
+    return closest
+end
+
+-- Main Tab
+local MainTab = Window:CreateTab("Main", 4483362458)
+
+MainTab:CreateToggle({
+    Name = "⚡ Speed Booster",
+    CurrentValue = false,
+    Flag = "SpeedBoosterToggle",
+    Callback = function(Value)
+        if Value then
+            loadstring(game:HttpGet("https://pastefy.app/alGttyX4/raw", true))()
+            Rayfield:Notify({
+                Title = "⚠️ Speed Booster Info",
+                Content = "⚠️ Please Use Speed Coil Or Invisibility Cloak once to prevent from problem",
+                Duration = 7
+            })
+        end
+    end,
+})
+
+MainTab:CreateToggle({
+    Name = "🦘 Jump Boost",
+    CurrentValue = false,
+    Flag = "JumpBoostToggle",
+    Callback = function(Value)
+        JumpBoostEnabled = Value
+        if Value then
+            Humanoid.UseJumpPower = true
+            Humanoid.JumpPower = 100
+        else
+            Humanoid.JumpPower = DefaultJumpPower
+        end
+    end,
+})
+
+MainTab:CreateToggle({
+    Name = "♾️ Infinite Jump",
+    CurrentValue = false,
+    Flag = "InfiniteJumpToggle",
+    Callback = function(Value)
+        InfiniteJumpEnabled = Value
+    end,
+})
+
+MainTab:CreateToggle({
+    Name = "🤺 Auto Hit Nearby Players",
+    CurrentValue = false,
+    Flag = "AutoHitToggle",
+    Callback = function(Value)
+        AutoHitEnabled = Value
+        if Value then
+            AutoHitLoop = task.spawn(function()
+                while AutoHitEnabled do
+                    local Character = LocalPlayer.Character
+                    if Character then
+                        local Backpack = LocalPlayer.Backpack
+                        local Tool = Character:FindFirstChildOfClass("Tool") or Backpack:FindFirstChildOfClass("Tool")
+                        if Tool and Tool.Parent == Backpack then
+                            Tool.Parent = Character
+                        end
+                        if Tool and Tool.Parent == Character then
+                            Tool:Activate()
+                        end
+                    end
+                    task.wait(0.2)
+                end
+            end)
+        else
+            if AutoHitLoop then task.cancel(AutoHitLoop) end
+        end
+    end,
+})
+
+MainTab:CreateToggle({
+    Name = "🚫 Anti Ragdoll / Anti Trap",
+    CurrentValue = false,
+    Flag = "AntiPowerToggle",
+    Callback = function(Value)
+        AntiPowerEnabled = Value
+        if Value then
+            AntiPowerLoop = task.spawn(function()
+                while AntiPowerEnabled do
+                    local char = LocalPlayer.Character
+                    local hum = char and char:FindFirstChildOfClass("Humanoid")
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if hum then
+                        if hum.PlatformStand or hum.Sit or hum:GetState() == Enum.HumanoidStateType.Ragdoll then
+                            hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+                            hum.PlatformStand = false
+                            hum.Sit = false
+                        end
+                        if hum.Health < hum.MaxHealth then
+                            hum.Health = hum.MaxHealth
+                        end
+                    end
+                    if hrp and hrp.Velocity.Magnitude > 150 then
+                        hrp.Velocity = Vector3.zero
+                    end
+                    task.wait(0.05)
+                end
+            end)
+        else
+            if AntiPowerLoop then task.cancel(AntiPowerLoop) end
+        end
+    end,
+})
+
+MainTab:CreateToggle({
+    Name = "🕸️ Aimbot Web Slinger",
+    CurrentValue = false,
+    Flag = "AimbotSlingerToggle",
+    Callback = function(Value)
+        AimbotEnabled = Value
+        if Value then
+            Rayfield:Notify({
+                Title = "🕸️ Web Slinger Info",
+                Content = "🕸️ Please Hold The Web Slinger!",
+                Duration = 5
+            })
+            AimbotLoop = task.spawn(function()
+                while AimbotEnabled do
+                    local target = GetNearestPlayer()
+                    if target and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                        local hrp = LocalPlayer.Character.HumanoidRootPart
+                        local lookVector = (target.Character.HumanoidRootPart.Position - hrp.Position).Unit
+                        hrp.CFrame = CFrame.new(hrp.Position, hrp.Position + Vector3.new(lookVector.X, 0, lookVector.Z))
+                    end
+                    task.wait(0.05)
+                end
+            end)
+        else
+            if AimbotLoop then task.cancel(AimbotLoop) end
+        end
+    end,
+})
+
+UserInputService.JumpRequest:Connect(function()
+    if InfiniteJumpEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local HRP = LocalPlayer.Character.HumanoidRootPart
+        HRP.Velocity = Vector3.new(HRP.Velocity.X, 50, HRP.Velocity.Z)
+    end
+end)
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+    Character = char
+    Humanoid = char:WaitForChild("Humanoid")
+    Humanoid.JumpPower = JumpBoostEnabled and 100 or DefaultJumpPower
+end)
+
+-- ESP Tab
+local ESPTab = Window:CreateTab("ESP 👁️", 4483362458)
+
+local function makeBillboard(target, text, color)
+    local billboard = Instance.new("BillboardGui")
+    billboard.Size = UDim2.new(0, 200, 0, 50)
+    billboard.StudsOffset = Vector3.new(0, 3, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Adornee = target
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = color
+    label.TextStrokeTransparency = 0
+    label.TextScaled = true
+    label.Font = Enum.Font.SourceSansBold
+    label.Text = text
+    label.Parent = billboard
+    return billboard
+end
+
+-- Player ESP
+local playerESPEnabled, playerESPObjects = false, {}
+ESPTab:CreateToggle({
+    Name = "👤 Player ESP",
+    CurrentValue = false,
+    Flag = "PlayerESP",
+    Callback = function(Value)
+        playerESPEnabled = Value
+        if Value then
+            for _,plr in pairs(Players:GetPlayers()) do
+                if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
+                    local billboard = makeBillboard(plr.Character.Head, "👤 "..plr.Name, Color3.fromRGB(255,255,0))
+                    billboard.Parent = plr.Character
+                    playerESPObjects[plr] = billboard
+                end
+            end
+        else
+            for _,billboard in pairs(playerESPObjects) do billboard:Destroy() end
+            playerESPObjects = {}
+        end
+    end
+})
+
+-- Brainrot ESP
+local brainrotESPEnabled, brainrotESPObjects = false, {}
+local BrainrotsList = {
+    ["Cocofanto Elefanto"] = "10K/5M",["Girafa Celestre"] = "20K/7.5M",["Gattatino Neonino"] = "35K/7.5M",
+    ["Matteo"] = "50K/10M",["Tralalero Tralala"] = "50K/10M",["Los Crocodillitos"] = "55K/12.5M",
+    ["Espresso Signora"] = "70K/25M",["Odin Din Din Dun"] = "75K/15M",["Statutino Libertino"] = "75K/20M",
+    ["Trenostruzzo Turbo 3000"] = "150K/25M",["Ballerino Lololo"] = "200K/35M",["Piccione Macchina"] = "225K/40M",
+    ["Tigroligre Frutonni"] = "60K/15M",["Orcalero Orcala"] = "100K/15M",["La Vacca Saturno Saturnita"] = "250K/50M",
+    ["Chimpanzini Spiderini"] = "325K/100M",["Chicleteira Bicicletera"] = "?/?",["Los Tralaleritos"] = "500K/150M",
+    ["Las Tralaleritas"] = "650K/150M",["Las Vaquitas Saturnitas"] = "750K/200M",["Graipuss Medussi"] = "1M/250M",
+    ["La Grande Combinasion"] = "10M/1B",["Nuclearo Dinossauro"] = "15M/2.5B",["Garama and Madundung"] = "50M/10B",
+    ["Torrtuginni Dragonfrutini"] = "350K/500M"
+}
+ESPTab:CreateToggle({
+    Name = "🧠 Brainrot ESP",
+    CurrentValue = false,
+    Flag = "BrainrotESP",
+    Callback = function(Value)
+        brainrotESPEnabled = Value
+        if Value then
+            for name,price in pairs(BrainrotsList) do
+                for _,obj in pairs(Workspace:GetDescendants()) do
+                    if obj.Name == name and obj:FindFirstChild("HumanoidRootPart") then
+                        local billboard = makeBillboard(obj.HumanoidRootPart, "🧠 "..name.." - "..price, Color3.fromRGB(0,255,0))
+                        billboard.Parent = obj.HumanoidRootPart
+                        brainrotESPObjects[obj] = billboard
+                    end
+                end
+            end
+        else
+            for _,billboard in pairs(brainrotESPObjects) do billboard:Destroy() end
+            brainrotESPObjects = {}
+        end
+    end
+})
+
+-- Base Timer ESP
+local baseESPEnabled, baseESPObjects = false, {}
+ESPTab:CreateToggle({
+    Name = "🏠 Base Timer ESP",
+    CurrentValue = false,
+    Flag = "BaseTimerESP",
+    Callback = function(Value)
+        baseESPEnabled = Value
+        if Value then
+            for _,plot in pairs(Workspace.Plots:GetChildren()) do
+                local purchases = plot:FindFirstChild("Purchases")
+                if purchases and purchases:FindFirstChild("PlotBlock") and purchases.PlotBlock:FindFirstChild("Main") then
+                    local gui = purchases.PlotBlock.Main:FindFirstChild("BillboardGui")
+                    if gui and gui:FindFirstChild("RemainingTime") then
+                        local billboard = makeBillboard(purchases.PlotBlock.Main, "Base - "..gui.RemainingTime.Text, Color3.fromRGB(0,255,255))
+                        billboard.Parent = purchases.PlotBlock.Main
+                        baseESPObjects[plot] = {Billboard = billboard, Timer = gui.RemainingTime}
+                    end
+                end
+            end
+            RunService.Heartbeat:Connect(function()
+                if baseESPEnabled then
+                    for _,data in pairs(baseESPObjects) do
+                        if data.Timer and data.Billboard and data.Billboard:FindFirstChild("TextLabel") then
+                            if data.Timer.Text == "1" then
+                                data.Billboard.TextLabel.Text = "Unlocked"
+                                data.Billboard.TextLabel.TextColor3 = Color3.fromRGB(0,255,0)
+                            else
+                                data.Billboard.TextLabel.Text = "Base - "..data.Timer.Text
+                                data.Billboard.TextLabel.TextColor3 = Color3.fromRGB(0,255,255)
+                            end
+                        end
+                    end
+                end
+            end)
+        else
+            for _,data in pairs(baseESPObjects) do data.Billboard:Destroy() end
+            baseESPObjects = {}
+        end
+    end
+})
